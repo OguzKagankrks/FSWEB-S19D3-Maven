@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Service
 public class AccountServiceImpl implements AccountService {
+
     private final AccountRepository accountRepository;
 
     @Override
@@ -18,7 +19,26 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public Account findById(Long id) {
+        return accountRepository.findById(id).orElse(null);
+    }
+
+    @Override
     public Account save(Account account) {
         return accountRepository.save(account);
+    }
+
+    @Override
+    public Account update(Long id, Account account) {
+        Account existing = accountRepository.findById(id).orElse(null);
+        if (existing == null) return null;
+
+        existing.setName(account.getName());
+        return accountRepository.save(existing);
+    }
+
+    @Override
+    public void delete(Long id) {
+        accountRepository.deleteById(id);
     }
 }

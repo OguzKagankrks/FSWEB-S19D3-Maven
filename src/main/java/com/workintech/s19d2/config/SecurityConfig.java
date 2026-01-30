@@ -22,30 +22,47 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authManager(UserDetailsService userDetailsService) {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        return new ProviderManager(daoAuthenticationProvider);
+    public AuthenticationManager authManager(UserDetailsService userDetailsService,
+                                             PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return new ProviderManager(provider);
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        return http.csrf(csrf -> csrf.disable())
+        return http
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/auth/**").permitAll();
-                    auth.requestMatchers("/welcome/**").permitAll();
+
+                    auth.requestMatchers("/", "/welcome", "/welcome/**").permitAll();
                     auth.requestMatchers("/actuator/**").permitAll();
+
+
+                    auth.requestMatchers("/workintech/auth/**").permitAll();
+                    auth.requestMatchers("/auth/**").permitAll();
+
+
+                    auth.requestMatchers(HttpMethod.GET, "/workintech/accounts/**")
+                            .hasAnyAuthority("ADMIN", "USER");
+                    auth.requestMatchers(HttpMethod.POST, "/workintech/accounts/**").hasAuthority("ADMIN");
+                    auth.requestMatchers(HttpMethod.PUT, "/workintech/accounts/**").hasAuthority("ADMIN");
+                    auth.requestMatchers(HttpMethod.DELETE, "/workintech/accounts/**").hasAuthority("ADMIN");
+
+
                     auth.requestMatchers(HttpMethod.GET, "/account/**")
                             .hasAnyAuthority("ADMIN", "USER");
                     auth.requestMatchers(HttpMethod.POST, "/account/**").hasAuthority("ADMIN");
                     auth.requestMatchers(HttpMethod.PUT, "/account/**").hasAuthority("ADMIN");
                     auth.requestMatchers(HttpMethod.DELETE, "/account/**").hasAuthority("ADMIN");
+
+
                     auth.anyRequest().authenticated();
                 })
-                .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
+                .formLogin(Customizer.withDefaults())
+                .oauth2Login(Customizer.withDefaults())
                 .build();
     }
-
 }
